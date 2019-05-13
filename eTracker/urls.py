@@ -18,7 +18,8 @@ from django.urls import include, path
 from django.views.generic.base import TemplateView
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='registration/home.html'), name='home'),
+    path('', TemplateView.as_view(template_name='registration/home.html'), 
+                                    name='home'),
     path('admin/', admin.site.urls),
 	path('board/', include('eTracker.board.urls')),
 	path('gmailauth/', include('eTracker.gmailauth.urls')),
