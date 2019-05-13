@@ -1,0 +1,24 @@
+{% load static %}
+
+<!-- <link rel="stylesheet" type="text/css" href="{% static 'board/style.css' %}"> -->
+
+{% if emails %}
+<header>
+	<h1>
+		Your first 20 emails
+	</h1>
+</header>
+    <table>
+	{% for id, obj in emails.items %}
+	   <tr>
+	        <th> {{ id }} </th>
+	        <td> {{ obj.subject }} </td>
+	        <td> {{ obj.sender_email }} </td>
+	        <!-- <td> {{ obj.body }} </td>-->
+	   </tr>
+	{% endfor %}
+	</table>
+{% else %}
+    <p>No emails are available.</p>
+{% endif %}
+

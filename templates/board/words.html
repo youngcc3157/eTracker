@@ -1,0 +1,13 @@
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'board/style.css' %}">
+
+{% if most_used_words %}
+    <ul>
+    {% for word, count in most_used_words %}
+        <li><a>{{ word }} and {{count}}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No polls are available.</p>
+{% endif %}
