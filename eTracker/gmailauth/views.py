@@ -12,11 +12,11 @@ from django.shortcuts import render
 from httplib2 import Http
 
 #Address: "localhost/auth"
-def home(request):
+def gmailauth(request):
     status = True
 
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('admin')
+        return HttpResponseRedirect('/')
 
     storage = DjangoORMStorage(CredentialsModel, 'id', 
     							request.user, 'credential')
