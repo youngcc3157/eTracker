@@ -2,12 +2,14 @@ from __future__ import print_function
 import os.path
 import httplib2
 import base64
-from oauth2client    import file
+from oauth2client    import file, client, tools
 from apiclient       import discovery
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
 from eTracker.gmailauth.models import CredentialsModel
 
 from eTracker.email_object import Email
+from django.conf import settings
+import argparse
 
 class Gmail:
     """
@@ -15,11 +17,11 @@ class Gmail:
     """
     def __init__(self, request):
         self.request = request
+        self.APPLICATION_NAME = 'eTracker'
         credentials = self.getCredentials()
         http = credentials.authorize(httplib2.Http())
         self.service = discovery.build('gmail', 'v1', http=http)
         self.msgs = self.service.users().messages()
-        self.APPLICATION_NAME = 'eTracker'
 
     def getCredentials(self):
         """
@@ -41,8 +43,8 @@ class Gmail:
             flow.user_agent = self.APPLICATION_NAME
 
             #Setting up flags
-            argparser = argparse.ArgumentParser(parents=[tools.argparser])
-            flags = argparser.parse_args()
+            #argparser = argparse.ArgumentParser(parents=[tools.argparser])
+            #flags = argparser.parse_args()
 
             credentials = tools.run_flow(flow, storage, flags)
             

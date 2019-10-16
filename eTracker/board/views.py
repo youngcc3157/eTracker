@@ -15,8 +15,11 @@ def index(request):
 	return render(request, 'board/index.html', context)
 
 #Address: "localhost/board/words"
+"""
+	Not functional for now  
+"""
 def words(request):
-	gmail = gmail_api.Gmail()
+	gmail = Gmail(request)
 	most_used_words = gmail.getMostUsedNWords(20)
 	context = {'most_used_words': most_used_words}
 	return render(request, 'board/words.html', context)

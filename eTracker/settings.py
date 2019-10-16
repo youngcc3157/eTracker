@@ -34,8 +34,8 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # my_project/settings.py
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Application definition
 

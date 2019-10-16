@@ -10,6 +10,9 @@ from .tokens import account_activation_token
 from eTracker.users.models import User
 from django.core.mail import EmailMessage
 
+"""def landing(request):
+    if 
+"""
 def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
