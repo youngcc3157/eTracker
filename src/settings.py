@@ -46,11 +46,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    'rest_framework',
+
     # Local
-    'eTracker.gmailauth.apps.GmailauthConfig',
-    'eTracker.board.apps.BoardConfig',
-    'eTracker.users.apps.UsersConfig',
+    'src.gmailauth.apps.GmailauthConfig',
+    'src.board.apps.BoardConfig',
+    'src.users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -63,7 +64,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'eTracker.urls'
+ROOT_URLCONF = 'src.urls'
 
 TEMPLATES = [
     {
@@ -83,7 +84,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'eTracker.wsgi.application'
+WSGI_APPLICATION = 'src.wsgi.application'
 
 
 # Database
@@ -131,17 +132,26 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = os.path.join(BASE_DIR, '/static/')
 
-#Location of client secret json file
-GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = 'json/client_secret.json'
+# Location of client secret json file
+GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = 'client_info/client_secret.json'
 
-#Scopes for gmail authentication
+# Scopes for gmail authentication
 GMAIL_SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 
 REDIRECT_URI = config['REDIRECT_URI']
 
-#Verification email sender settings
+# Verification email sender settings
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = config['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = config['EMAIL_HOST_PASSWORD']
 EMAIL_PORT = 587
+
+# REST API
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}

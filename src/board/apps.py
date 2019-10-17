@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class BoardConfig(AppConfig):
-    name = 'eTracker.board'
+    name = 'src.board'

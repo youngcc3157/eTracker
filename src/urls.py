@@ -18,11 +18,12 @@ from django.urls import include, path
 from django.views.generic.base import TemplateView
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='registration/home.html'), 
-                                    name='home'),
+    path('', TemplateView.as_view(template_name='registration/home.html'),
+         name='home'),
     path('admin/', admin.site.urls),
-	path('board/', include('eTracker.board.urls')),
-	path('gmailauth/', include('eTracker.gmailauth.urls')),
-    path('users/', include('eTracker.users.urls')),
+    path('board/', include('src.board.urls')),
+    path('gmailauth/', include('src.gmailauth.urls')),
+    path('users/', include('src.users.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('api-auth/', include('rest_framework.urls')),
 ]

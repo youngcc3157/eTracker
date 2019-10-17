@@ -2,19 +2,21 @@ from __future__ import print_function
 import os.path
 import httplib2
 import base64
-from oauth2client    import file, client, tools
-from apiclient       import discovery
+from oauth2client import file, client, tools
+from apiclient import discovery
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
-from eTracker.gmailauth.models import CredentialsModel
+from src.gmailauth.models import CredentialsModel
 
-from eTracker.email_object import Email
+from src.email_object import Email
 from django.conf import settings
 import argparse
+
 
 class Gmail:
     """
         Gmail class plays the connector role between eTracker and Gmail API
     """
+
     def __init__(self, request):
         self.request = request
         self.APPLICATION_NAME = 'eTracker'
@@ -26,30 +28,29 @@ class Gmail:
     def getCredentials(self):
         """
             Gets valid user credentials from storage.
-    
+
             If nothing has been stored, or if stored credentials are invalid,
             the OAuth2 flow is completed to obtain the new credentials.
 
             Returns:
                 Credentials, the obtained credential.
         """
-        storage = DjangoORMStorage(CredentialsModel, 'id', 
-                                    self.request.user, 'credential')
+        storage = DjangoORMStorage(CredentialsModel, 'id',
+                                   self.request.user, 'credential')
         credentials = storage.get()
         if not credentials or credentials.invalid:
             flow = client.flow_from_clientsecrets(
-                    settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON, 
-                    settings.GMAIL_SCOPES)
+                settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON,
+                settings.GMAIL_SCOPES)
             flow.user_agent = self.APPLICATION_NAME
 
-            #Setting up flags
-            #argparser = argparse.ArgumentParser(parents=[tools.argparser])
-            #flags = argparser.parse_args()
+            # Setting up flags
+            # argparser = argparse.ArgumentParser(parents=[tools.argparser])
+            # flags = argparser.parse_args()
 
             credentials = tools.run_flow(flow, storage, flags)
-            
-        return credentials
 
+        return credentials
 
     def getLastNEmails(self, N):
         """
@@ -57,8 +58,8 @@ class Gmail:
         """
 
         # <<<<<ATTENTION>>>>>
-        # This line should be modified so that it only collects important(label)
-        # and received emails
+        # This line should be modified so that it only
+        # collects important(label) and received emails
         response = self.msgs.list(userId='me', maxResults=N).execute()
         messages = []
         if 'messages' in response:
@@ -78,21 +79,21 @@ class Gmail:
         msg = self.msgs.get(userId='me', id=message_id).execute()
         payld = msg['payload']
 
-        #Get body paragraph
+        # Get body paragraph
         paragraph = ""
         if 'parts' in payld:
-            mssg_parts = payld['parts'] 
-            part_one  = mssg_parts[0] 
-            part_body = part_one['body'] 
+            mssg_parts = payld['parts']
+            part_one = mssg_parts[0]
+            part_body = part_one['body']
             if 'data' in part_body:
                 part_data = part_body['data']
-                #Decoding from Base64 to UTF-8 (human readable texts)
-                cleaned_base64 = part_data.replace("-","+") 
-                cleaned_base64 = cleaned_base64.replace("_","/")
+                # Decoding from Base64 to UTF-8 (human readable texts)
+                cleaned_base64 = part_data.replace("-", "+")
+                cleaned_base64 = cleaned_base64.replace("_", "/")
                 paragraph = base64.b64decode(cleaned_base64.encode('utf-8'))
                 paragraph = paragraph.decode("utf-8")
-        
-        #Get subject and email sender
+
+        # Get subject and email sender
         subject = ""
         sender_email = ""
         if 'headers' in payld:
@@ -105,13 +106,13 @@ class Gmail:
                 if msg_headers[i]['name'] == "From":
                     sender_email = msg_headers[i]['value']
 
-        #Get label ids
+        # Get label ids
         label_id = ""
         if 'labelIds' in msg:
             label_id = msg['labelIds']
 
         email = Email(message_id, msg['threadId'], label_id,
-                    msg['historyId'], subject, sender_email, paragraph)
+                      msg['historyId'], subject, sender_email, paragraph)
         return email
 
 
@@ -124,13 +125,16 @@ class Gmail:
         paragraph = ""
         if 'parts' in payld:
             mssg_parts = payld['parts'] # fetching the message parts
-            part_one  = mssg_parts[0] # fetching first element of the part 
+            part_one  = mssg_parts[0] # fetching first element of the part
             part_body = part_one['body'] # fetching body of the message
             if 'data' in part_body:
                 part_data = part_body['data'] # fetching data from the body
-                cleaned_base64 = part_data.replace("-","+") # decoding from Base64 to UTF-8
-                cleaned_base64 = cleaned_base64.replace("_","/") # decoding from Base64 to UTF-8
-                paragraph = base64.b64decode(str(cleaned_base64).encode('utf-8')) # decoding from Base64 to UTF-8
+                cleaned_base64 = part_data.replace("-","+")
+                    # decoding from Base64 to UTF-8
+                cleaned_base64 = cleaned_base64.replace("_","/")
+                    # decoding from Base64 to UTF-8
+                paragraph = base64.b64decode(str(cleaned_base64).encode('utf-8'))
+                    # decoding from Base64 to UTF-8
         return paragraph
 
     def getTitle(self, message_id):
@@ -140,7 +144,7 @@ class Gmail:
         title = ''
         if 'headers' in payld:
             mssg_headers = payld['headers'] # fetching the message parts
-            part_one  = mssg_headers[-4] # fetching first element of the part 
+            part_one  = mssg_headers[-4] # fetching first element of the part
             title = part_one['value'] # fetching body of the message
         return title
 

@@ -4,7 +4,7 @@ from googleapiclient.discovery import build
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
 from .models import CredentialsModel
-from eTracker import settings
+from src import settings
 from oauth2client.contrib import xsrfutil
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
@@ -12,21 +12,23 @@ from django.shortcuts import render
 from httplib2 import Http
 
 #Address: "localhost/auth"
+
+
 def gmailauth(request):
     status = True
 
     if not request.user.is_authenticated:
         return HttpResponseRedirect('/')
 
-    storage = DjangoORMStorage(CredentialsModel, 'id', 
-    							request.user, 'credential')
+    storage = DjangoORMStorage(CredentialsModel, 'id',
+                               request.user, 'credential')
     credential = storage.get()
     try:
         access_token = credential.access_token
         resp, cont = Http().request(
-        	"https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.readonly",
             headers={'Host': 'www.googleapis.com',
-                    'Authorization': access_token})
+                     'Authorization': access_token})
     except:
         status = False
         print('Not Found')
@@ -50,9 +52,10 @@ FLOW = flow_from_clientsecrets(
     redirect_uri=settings.REDIRECT_URI,
     prompt='consent')
 
+
 def gmailAuthenticate(request):
-    storage = DjangoORMStorage(CredentialsModel, 'id', 
-    							request.user, 'credential')
+    storage = DjangoORMStorage(CredentialsModel, 'id',
+                               request.user, 'credential')
     credential = storage.get()
     if credential is None or credential.invalid:
         FLOW.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
@@ -71,19 +74,19 @@ def gmailAuthenticate(request):
 
 def authReturn(request):
     get_state = bytes(request.GET.get('state'), 'utf8')
-    #If received state is not valid, show bad request page
+    # If received state is not valid, show bad request page
     #print("get_state is ",get_state)
 
-    #<<<<ATTENTION>>>>
-    #It sometimes causes an error for this step but it seems to work right now
-    #When already loged in, it doesn't cause an error
-    #But when someone start from logging in and authenticate it causes an error
+    # <<<<ATTENTION>>>>
+    # It sometimes causes an error for this step but it seems to work right now
+    # When already loged in, it doesn't cause an error
+    # But when someone start from logging in and authenticate it causes an error
     if not xsrfutil.validate_token(settings.SECRET_KEY, get_state,
                                    request.user):
         return HttpResponseBadRequest()
     credential = FLOW.step2_exchange(request.GET.get('code'))
-    storage = DjangoORMStorage(CredentialsModel, 'id', 
-    							request.user, 'credential')
+    storage = DjangoORMStorage(CredentialsModel, 'id',
+                               request.user, 'credential')
     storage.put(credential)
     #print("access_token: %s" % credential.access_token)
     return HttpResponseRedirect("/")
