@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'src.gmailauth.apps.GmailauthConfig',
     'src.board.apps.BoardConfig',
     'src.users.apps.UsersConfig',
+    'src.job_email.apps.Job_emailConfig',
 ]
 
 MIDDLEWARE = [
