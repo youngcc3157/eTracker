@@ -16,7 +16,6 @@ import json
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 CONFIG_FILE = 'config.ini'
 config = {}
 with open(CONFIG_FILE) as f:
@@ -53,7 +52,7 @@ INSTALLED_APPS = [
     'src.gmailauth.apps.GmailauthConfig',
     'src.board.apps.BoardConfig',
     'src.users.apps.UsersConfig',
-    'src.job_email.apps.Job_emailConfig',
+    'src.EmailAccount.apps.EmailaccountConfig',
 ]
 
 MIDDLEWARE = [

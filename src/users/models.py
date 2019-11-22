@@ -4,6 +4,7 @@ from django.contrib.auth.models import BaseUserManager, \
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from src import settings
+from src.EmailAccount.models import EmailAccount
 
 
 class EmailUserManager(BaseUserManager):
@@ -53,6 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     USERNAME_FIELD = 'email'
     objects = EmailUserManager()
+    job_email = models.ManyToManyField(EmailAccount)
 
     def __str__(self):
         return self.email
