@@ -54,7 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     USERNAME_FIELD = 'email'
     objects = EmailUserManager()
-    job_email = models.ManyToManyField(EmailAccount)
+    emailaccount = models.ManyToManyField(EmailAccount)
 
     def __str__(self):
         return self.email

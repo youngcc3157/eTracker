@@ -1,3 +1,4 @@
+from src.EmailAccount.models import EmailAccount
 import httplib2
 
 from googleapiclient.discovery import build
@@ -10,6 +11,8 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
 from django.shortcuts import render
 from httplib2 import Http
+
+from src.users.models import User
 
 #Address: "localhost/auth"
 
@@ -31,7 +34,6 @@ def gmailauth(request):
                      'Authorization': access_token})
     except:
         status = False
-        print('Not Found')
 
     return render(request, 'gmailauth/index.html', {'status': status})
 
@@ -53,10 +55,19 @@ FLOW = flow_from_clientsecrets(
     prompt='consent')
 
 
+"""
+    gmailAuthenticate: view to authorize a credential for specfic user.
+        If already authroized, then preceeds as is.
+"""
+
+
 def gmailAuthenticate(request):
     storage = DjangoORMStorage(CredentialsModel, 'id',
                                request.user, 'credential')
     credential = storage.get()
+
+    # if Credential is invalid or doesn't exist, get a new one through Gmail url
+    # else, preceeds as Email is authorized already
     if credential is None or credential.invalid:
         FLOW.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
                                                        request.user)
@@ -66,10 +77,15 @@ def gmailAuthenticate(request):
         http = httplib2.Http()
         http = credential.authorize(http)
         service = build('gmail', 'v1', http=http)
-        #print('access_token = ', credential.access_token)
         status = True
 
         return render(request, 'gmailauth/index.html', {'status': status})
+
+
+"""
+    authReturn: view to land after authorization is done.
+        If already authroized, then preceeds as is.
+"""
 
 
 def authReturn(request):
@@ -81,6 +97,12 @@ def authReturn(request):
     # It sometimes causes an error for this step but it seems to work right now
     # When already loged in, it doesn't cause an error
     # But when someone start from logging in and authenticate it causes an error
+
+    # Create new EmailAccount entry for this specific Gmail account
+    curUser = User.objects.get(id=request.user.id)
+    curUser.emailaccount.create(email_type='Gmail')
+
+    # Create new credential entry for the user and save it in CredentialsModel
     if not xsrfutil.validate_token(settings.SECRET_KEY, get_state,
                                    request.user):
         return HttpResponseBadRequest()
@@ -88,5 +110,5 @@ def authReturn(request):
     storage = DjangoORMStorage(CredentialsModel, 'id',
                                request.user, 'credential')
     storage.put(credential)
-    #print("access_token: %s" % credential.access_token)
+
     return HttpResponseRedirect("/")
