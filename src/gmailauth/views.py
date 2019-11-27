@@ -1,20 +1,16 @@
-from src.EmailAccount.models import EmailAccount
 import httplib2
-
 from googleapiclient.discovery import build
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
-from .models import CredentialsModel
-from src import settings
 from oauth2client.contrib import xsrfutil
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
 from django.shortcuts import render
-from httplib2 import Http
+from apiclient import discovery
 
+from src import settings
+from src.EmailAccount.models import GmailCredential
 from src.users.models import User
-
-#Address: "localhost/auth"
 
 
 def gmailauth(request):
@@ -23,8 +19,11 @@ def gmailauth(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('/')
 
-    storage = DjangoORMStorage(CredentialsModel, 'id',
-                               request.user, 'credential')
+    first_email_object = User.objects.get(
+        id=request.user.id).emailaccount.first()
+
+    storage = DjangoORMStorage(GmailCredential, 'id_id',
+                               first_email_object, 'credential')
     credential = storage.get()
     try:
         access_token = credential.access_token
@@ -62,8 +61,10 @@ FLOW = flow_from_clientsecrets(
 
 
 def gmailAuthenticate(request):
-    storage = DjangoORMStorage(CredentialsModel, 'id',
-                               request.user, 'credential')
+    first_email_object = User.objects.get(
+        id=request.user.id).emailaccount.first()
+    storage = DjangoORMStorage(GmailCredential, 'id_id',
+                               first_email_object, 'credential')
     credential = storage.get()
 
     # if Credential is invalid or doesn't exist, get a new one through Gmail url
@@ -91,24 +92,40 @@ def gmailAuthenticate(request):
 def authReturn(request):
     get_state = bytes(request.GET.get('state'), 'utf8')
     # If received state is not valid, show bad request page
-    #print("get_state is ",get_state)
+    # print("get_state is ",get_state)
 
     # <<<<ATTENTION>>>>
     # It sometimes causes an error for this step but it seems to work right now
     # When already loged in, it doesn't cause an error
     # But when someone start from logging in and authenticate it causes an error
 
-    # Create new EmailAccount entry for this specific Gmail account
-    curUser = User.objects.get(id=request.user.id)
-    curUser.emailaccount.create(email_type='Gmail')
-
-    # Create new credential entry for the user and save it in CredentialsModel
     if not xsrfutil.validate_token(settings.SECRET_KEY, get_state,
                                    request.user):
         return HttpResponseBadRequest()
-    credential = FLOW.step2_exchange(request.GET.get('code'))
-    storage = DjangoORMStorage(CredentialsModel, 'id',
-                               request.user, 'credential')
-    storage.put(credential)
 
-    return HttpResponseRedirect("/")
+    # Get the list of authorized emails for current user
+    email_objects = User.objects.get(id=request.user.id).emailaccount.all()
+    verified_emails = [obj.email for obj in email_objects]
+
+    # Get email address for authorized account
+    credential = FLOW.step2_exchange(request.GET.get('code'))
+    http = credential.authorize(httplib2.Http())
+    service = discovery.build('gmail', 'v1', http=http)
+    profile_json = service.users().getProfile(userId='me').execute()
+    authorized_email_addr = profile_json['emailAddress']
+
+    if not authorized_email_addr in verified_emails:
+        # Create new EmailAccount entry and save it
+        curUser = User.objects.get(id=request.user.id)
+        new_email_acc = curUser.emailaccount.create(
+            email=authorized_email_addr, email_type='Gmail')
+
+        # Create new credential entry for the email and save it in CredentialsModel
+        storage = DjangoORMStorage(GmailCredential, 'id_id',
+                                   new_email_acc.id, 'credential')
+        storage.put(credential)
+
+        return HttpResponseRedirect("/")
+    else:
+        # TO DO: Add a request to the client to try different Gmail account
+        return HttpResponseRedirect("/gmailauth/gmailAuthenticate")

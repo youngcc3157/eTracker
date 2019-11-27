@@ -5,10 +5,11 @@ import base64
 from oauth2client import file, client, tools
 from apiclient import discovery
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
-from src.gmailauth.models import CredentialsModel
+from src.EmailAccount.models import GmailCredential
 
 from src.email_object import Email
 from django.conf import settings
+from src.users.models import User
 import argparse
 
 
@@ -35,8 +36,11 @@ class Gmail:
             Returns:
                 Credentials, the obtained credential.
         """
-        storage = DjangoORMStorage(CredentialsModel, 'id',
-                                   self.request.user, 'credential')
+
+        first_email_object = User.objects.get(
+            id=self.request.user.id).emailaccount.first()
+        storage = DjangoORMStorage(GmailCredential, 'id_id',
+                                   first_email_object.id, 'credential')
         credentials = storage.get()
         if not credentials or credentials.invalid:
             flow = client.flow_from_clientsecrets(
@@ -45,8 +49,8 @@ class Gmail:
             flow.user_agent = self.APPLICATION_NAME
 
             # Setting up flags
-            # argparser = argparse.ArgumentParser(parents=[tools.argparser])
-            # flags = argparser.parse_args()
+            argparser = argparse.ArgumentParser(parents=[tools.argparser])
+            flags = argparser.parse_args()
 
             credentials = tools.run_flow(flow, storage, flags)
 
@@ -133,7 +137,8 @@ class Gmail:
                     # decoding from Base64 to UTF-8
                 cleaned_base64 = cleaned_base64.replace("_","/")
                     # decoding from Base64 to UTF-8
-                paragraph = base64.b64decode(str(cleaned_base64).encode('utf-8'))
+                paragraph = base64.b64decode(
+                    str(cleaned_base64).encode('utf-8'))
                     # decoding from Base64 to UTF-8
         return paragraph
 
@@ -149,7 +154,7 @@ class Gmail:
         return title
 
     def getMostRecentNEmailSamples(self, N):
-        #Get last N messages (Only messageId and threadId are returned in 'messages')
+        # Get last N messages (Only messageId and threadId are returned in 'messages')
         response = self.msgs.list(userId='me', maxResults=N).execute()
         messages = []
         if 'messages' in response:
@@ -162,19 +167,19 @@ class Gmail:
         return id_to_body
 
     def getMostUsedNWords(self, topN):
-        #Get last 10 messages (Only messageId and threadId are returned in 'messages')
+        # Get last 10 messages (Only messageId and threadId are returned in 'messages')
         response = self.msgs.list(userId='me', maxResults=10).execute()
         messages = []
         if 'messages' in response:
             messages.extend(response['messages'])
 
-        #Save unique words
+        # Save unique words
         unique_words = {}
 
         for message in messages:
             para = self.getBodyParagraph(message['id'])
 
-            #Split a paragraph into words and find frequency of each word
+            # Split a paragraph into words and find frequency of each word
             words = para.split()
             for word in words:
                 if len(word) > 1:
@@ -182,5 +187,5 @@ class Gmail:
                         unique_words[word] = 0
                     unique_words[word] += 1
 
-        #Sort the unique words by occurance and return top N
+        # Sort the unique words by occurance and return top N
         return sorted(unique_words.items(), key=lambda x: x[1], reverse = True)[:topN]"""
