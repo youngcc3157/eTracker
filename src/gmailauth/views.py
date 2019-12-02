@@ -19,11 +19,12 @@ def gmailauth(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('/')
 
+    # To Do: Modify so that User can select the Email he wants to see
+    # instead of getting the first verified Email object
     first_email_object = User.objects.get(
         id=request.user.id).emailaccount.first()
-
     storage = DjangoORMStorage(GmailCredential, 'id_id',
-                               first_email_object, 'credential')
+                               first_email_object.id if first_email_object else -1, 'credential')
     credential = storage.get()
     try:
         access_token = credential.access_token
@@ -45,8 +46,6 @@ def gmailauth(request):
 # application, including client_id and client_secret, which are found
 # on the API Access tab on the Google APIs
 # Console <http://code.google.com/apis/console>
-
-
 FLOW = flow_from_clientsecrets(
     settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON,
     settings.GMAIL_SCOPES,
@@ -61,10 +60,13 @@ FLOW = flow_from_clientsecrets(
 
 
 def gmailAuthenticate(request):
+
+    # To Do: Modify so that User can select the Email he wants to see
+    # instead of getting the first verified Email object
     first_email_object = User.objects.get(
         id=request.user.id).emailaccount.first()
     storage = DjangoORMStorage(GmailCredential, 'id_id',
-                               first_email_object, 'credential')
+                               first_email_object.id if first_email_object else -1, 'credential')
     credential = storage.get()
 
     # if Credential is invalid or doesn't exist, get a new one through Gmail url

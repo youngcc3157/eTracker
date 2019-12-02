@@ -8,9 +8,10 @@ class EmailAccount(models.Model):
     email_type = models.CharField(max_length=254)
 
 
-class CheckedEmail(models.Model):
-    email_id = models.CharField(max_length=100, primary_key=True)
+class CheckedMessage(models.Model):
+    message_id = models.CharField(max_length=100, primary_key=True)
     email_account = models.ForeignKey(EmailAccount, on_delete=models.CASCADE)
+    body_text = models.TextField(null=True)
 
 
 class GmailCredential(models.Model):

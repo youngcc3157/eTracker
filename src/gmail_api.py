@@ -2,15 +2,16 @@ from __future__ import print_function
 import os.path
 import httplib2
 import base64
+import argparse
 from oauth2client import file, client, tools
 from apiclient import discovery
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
-from src.EmailAccount.models import GmailCredential
 
+from src.EmailAccount.models import GmailCredential, CheckedMessage
 from src.email_object import Email
 from django.conf import settings
 from src.users.models import User
-import argparse
+from src.users.models import User
 
 
 class Gmail:
@@ -21,6 +22,7 @@ class Gmail:
     def __init__(self, request):
         self.request = request
         self.APPLICATION_NAME = 'eTracker'
+        self.email_acc_obj = None
         credentials = self.getCredentials()
         http = credentials.authorize(httplib2.Http())
         self.service = discovery.build('gmail', 'v1', http=http)
@@ -36,11 +38,12 @@ class Gmail:
             Returns:
                 Credentials, the obtained credential.
         """
-
-        first_email_object = User.objects.get(
+        # To Do: Modify so that User can select the Email he wants to see
+        # instead of getting the first verified Email object
+        self.email_acc_obj = User.objects.get(
             id=self.request.user.id).emailaccount.first()
         storage = DjangoORMStorage(GmailCredential, 'id_id',
-                                   first_email_object.id, 'credential')
+                                   self.email_acc_obj.id if self.email_acc_obj else None, 'credential')
         credentials = storage.get()
         if not credentials or credentials.invalid:
             flow = client.flow_from_clientsecrets(
@@ -62,7 +65,7 @@ class Gmail:
         """
 
         # <<<<<ATTENTION>>>>>
-        # This line should be modified so that it only
+        # To Do: This line should be modified so that it only
         # collects important(label) and received emails
         response = self.msgs.list(userId='me', maxResults=N).execute()
         messages = []
@@ -74,6 +77,11 @@ class Gmail:
             email = self.createEmailObject(message['id'])
             emails[message['id']] = email
 
+        # Check the emails that are just visited from API call in to DB
+        for msg_id, email_obj in emails.items():
+            checked_email = CheckedMessage(
+                message_id=msg_id, email_account=self.email_acc_obj, body_text=email_obj.body)
+            checked_email.save()
         return emails
 
     def createEmailObject(self, message_id):
