@@ -8,17 +8,21 @@
 		Your first 20 emails
 	</h1>
 </header>
-    <table>
-	{% for id, obj in emails.items %}
-	   <tr>
-	        <th> {{ id }} </th>
-	        <td> {{ obj.subject }} </td>
-	        <td> {{ obj.sender_email }} </td>
-	        <!-- <td> {{ obj.body }} </td>-->
-	   </tr>
-	{% endfor %}
+<body>
+  	<table>
+		{% for id, obj in emails.items %}
+		   <tr>
+		        <th> {{ id }} </th>
+		        <td> {{ obj.subject }} </td>
+		        <td> {{ obj.sender_email }} </td>
+		        <!-- <td> {{ obj.body }} </td>-->
+		   </tr>
+		{% endfor %}
 	</table>
+ 	<p><a href="{% url 'logout' %}">logout</a></p>
+</body>
 {% else %}
     <p>No emails are available.</p>
+ 	<p><a href="{% url 'logout' %}">logout</a></p>
 {% endif %}
 
