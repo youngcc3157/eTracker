@@ -1,5 +1,5 @@
 # Don't track content of these folders
-json/
+client_info/
 
 config.ini
 *.ini
